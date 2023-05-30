@@ -80,21 +80,27 @@ pub fn no_denormals<T, F: FnOnce() -> T>(func: F) -> T {
 #[cfg(test)]
 mod tests {
 	use crate::no_denormals;
+	use std::num::FpCategory;
+
+	#[test]
+	fn arch() {
+		println!("Architecture: {:?}", std::env::consts::ARCH);
+	}
 
 	#[test]
 	fn test_positive() {
 		let small: f32 = f32::MIN_POSITIVE;
 		{
 			let smaller = small * 0.5;
-			assert!(smaller.is_subnormal());
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		}
 		no_denormals(|| {
 			let smaller = small * 0.5;
-			assert!(!smaller.is_subnormal());
+			assert_eq!(smaller.classify(), FpCategory::Zero);
 		});
 		{
 			let smaller = small * 0.5;
-			assert!(smaller.is_subnormal());
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		};
 	}
 
@@ -103,15 +109,15 @@ mod tests {
 		let small: f32 = -f32::MIN_POSITIVE;
 		{
 			let smaller = small * 0.5;
-			assert!(smaller.is_subnormal());
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		}
 		no_denormals(|| {
 			let smaller = small * 0.5;
-			assert!(!smaller.is_subnormal());
+			assert_eq!(smaller.classify(), FpCategory::Zero);
 		});
 		{
 			let smaller = small * 0.5;
-			assert!(smaller.is_subnormal());
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		};
 	}
 }

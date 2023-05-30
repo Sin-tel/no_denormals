@@ -24,15 +24,16 @@ pub struct DenormalGuard {
 impl DenormalGuard {
 	fn new() -> Self {
 		#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-		unsafe {
+		{
 			#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
 			use std::arch::x86_64::{_mm_getcsr, _mm_setcsr};
 
 			#[cfg(all(target_arch = "x86", target_feature = "sse"))]
 			use std::arch::x86::{_mm_getcsr, _mm_setcsr};
 
-			let mxcsr = _mm_getcsr();
-			_mm_setcsr(mxcsr | X86_MASK);
+			let mxcsr = unsafe { _mm_getcsr() };
+			unsafe { _mm_setcsr(mxcsr | X86_MASK) };
+
 			DenormalGuard { mxcsr }
 		}
 		#[cfg(target_arch = "aarch64")]
@@ -49,19 +50,19 @@ impl DenormalGuard {
 impl Drop for DenormalGuard {
 	fn drop(&mut self) {
 		#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-		unsafe {
+		{
 			#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
 			use std::arch::x86_64::_mm_setcsr;
 
 			#[cfg(all(target_arch = "x86", target_feature = "sse"))]
 			use std::arch::x86::_mm_setcsr;
 
-			_mm_setcsr(self.mxcsr);
+			unsafe { _mm_setcsr(self.mxcsr) };
 		}
 		#[cfg(target_arch = "aarch64")]
 		{
-			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) self.fpcr) };
-		}
+			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) self.fpcr) }
+		};
 	}
 }
 

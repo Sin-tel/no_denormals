@@ -1,13 +1,11 @@
 // RAII-style guard guard for turning off floating point denormals
-//
-// previous code also had the following:
-//        // All exceptions are masked
-//        mxcsr |= ((1 << 6) - 1) << 7;
-// but I don't know if this is actually necessary
-//
-// TODO: What should we do in case neither architectures are supported?
-// TODO: should we add the !send !sync hack?
-// https://stackoverflow.com/questions/62713667/how-to-implement-send-or-sync-for-a-type
+
+use core::cell::Cell;
+use core::marker::PhantomData;
+use std::sync::MutexGuard;
+
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")))]
+compile_error!("This crate only supports x86, x86_64 and aarch64.");
 
 // FTZ and DAZ
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -17,7 +15,16 @@ const X86_MASK: u32 = 0x8040;
 #[cfg(target_arch = "aarch64")]
 const AARCH64_MASK: u64 = 1 << 24;
 
+// These processor flags are local to each thread.
+// We implement !Send and !Sync with this workaround,
+// because negative trait bounds are not yet supported.
+type PhantomUnsync = PhantomData<Cell<()>>;
+type PhantomUnsend = PhantomData<MutexGuard<'static, ()>>;
+
 pub struct DenormalGuard {
+	_unsync: PhantomUnsync,
+	_unsend: PhantomUnsend,
+
 	#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 	mxcsr: u32,
 	#[cfg(target_arch = "aarch64")]
@@ -37,7 +44,11 @@ impl DenormalGuard {
 			let mxcsr = unsafe { _mm_getcsr() };
 			unsafe { _mm_setcsr(mxcsr | X86_MASK) };
 
-			DenormalGuard { mxcsr }
+			return DenormalGuard {
+				mxcsr,
+				_unsync: PhantomData,
+				_unsend: PhantomData,
+			};
 		}
 		#[cfg(target_arch = "aarch64")]
 		{
@@ -45,7 +56,11 @@ impl DenormalGuard {
 			unsafe { std::arch::asm!("mrs {}, fpcr", out(reg) fpcr) };
 			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) fpcr | AARCH64_MASK) };
 
-			DenormalGuard { fpcr }
+			return DenormalGuard {
+				fpcr,
+				_unsync: PhantomData,
+				_unsend: PhantomData,
+			};
 		}
 	}
 }

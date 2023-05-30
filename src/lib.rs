@@ -5,6 +5,9 @@
 //        mxcsr |= ((1 << 6) - 1) << 7;
 // but I don't know if this is actually necessary
 //
+// TODO: What should we do in case neither architectures are supported?
+// TODO: should we add the !send !sync hack?
+// https://stackoverflow.com/questions/62713667/how-to-implement-send-or-sync-for-a-type
 
 // FTZ and DAZ
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -72,4 +75,43 @@ pub fn no_denormals<T, F: FnOnce() -> T>(func: F) -> T {
 	std::mem::drop(guard);
 
 	return ret;
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::no_denormals;
+
+	#[test]
+	fn test_positive() {
+		let small: f32 = f32::MIN_POSITIVE;
+		{
+			let smaller = small * 0.5;
+			assert!(smaller.is_subnormal());
+		}
+		no_denormals(|| {
+			let smaller = small * 0.5;
+			assert!(!smaller.is_subnormal());
+		});
+		{
+			let smaller = small * 0.5;
+			assert!(smaller.is_subnormal());
+		};
+	}
+
+	#[test]
+	fn test_negative() {
+		let small: f32 = -f32::MIN_POSITIVE;
+		{
+			let smaller = small * 0.5;
+			assert!(smaller.is_subnormal());
+		}
+		no_denormals(|| {
+			let smaller = small * 0.5;
+			assert!(!smaller.is_subnormal());
+		});
+		{
+			let smaller = small * 0.5;
+			assert!(smaller.is_subnormal());
+		};
+	}
 }

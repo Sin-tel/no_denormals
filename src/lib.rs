@@ -98,6 +98,10 @@ mod tests {
 	use crate::no_denormals;
 	use std::num::FpCategory;
 
+	fn half(x: f32) -> f32 {
+		std::hint::black_box(x) * 0.5
+	}
+
 	#[test]
 	fn arch() {
 		println!("Architecture: {:?}", std::env::consts::ARCH);
@@ -107,15 +111,15 @@ mod tests {
 	fn test_positive() {
 		let small: f32 = f32::MIN_POSITIVE;
 		{
-			let smaller = small * 0.5;
+			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		}
 		no_denormals(|| {
-			let smaller = small * 0.5;
+			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Zero);
 		});
 		{
-			let smaller = small * 0.5;
+			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		};
 	}
@@ -124,15 +128,15 @@ mod tests {
 	fn test_negative() {
 		let small: f32 = -f32::MIN_POSITIVE;
 		{
-			let smaller = small * 0.5;
+			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		}
 		no_denormals(|| {
-			let smaller = small * 0.5;
+			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Zero);
 		});
 		{
-			let smaller = small * 0.5;
+			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		};
 	}

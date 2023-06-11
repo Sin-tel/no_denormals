@@ -1,5 +1,8 @@
-![build](https://github.com/Sin-tel/no_denormals/actions/workflows/rust.yml/badge.svg)
 # no_denormals
+[![build](https://github.com/Sin-tel/no_denormals/actions/workflows/rust.yml/badge.svg)](https://github.com/Sin-tel/no_denormals/actions/workflows/rust.yml)
+[![Crates.io](https://img.shields.io/crates/v/no_denormals.svg)](https://crates.io/crates/no_denormals) 
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 Temporarily turn off floating point denormals.
 
 Internally, this uses a RAII-style guard to manage the state of certain processor flags.

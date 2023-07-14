@@ -4,6 +4,17 @@
 //! On x86 and x86_64, this sets the flush-to-zero and denormals-are-zero flags in the MXCSR register.
 //! On aarch64 this sets the flush-to-zero flag in the FPCR register.
 //! In all cases, the register will be reset to its initial state when the guard is dropped.
+//!
+//! ## Usage
+//!
+//! ```rust
+//! use no_denormals::no_denormals;
+//!
+//! no_denormals(|| {
+//! 	// your DSP code here.
+//! });
+//!
+//! ```
 
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms)]
 
@@ -85,6 +96,7 @@ impl Drop for DenormalGuard {
 }
 
 /// Calls the `func` closure.
+#[inline]
 pub fn no_denormals<T, F: FnOnce() -> T>(func: F) -> T {
 	let guard = DenormalGuard::new();
 	let ret = func();

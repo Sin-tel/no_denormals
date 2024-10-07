@@ -45,8 +45,8 @@ struct DenormalGuard {
 }
 
 impl DenormalGuard {
-	#[allow(deprecated)]
 	fn new() -> Self {
+		#[allow(deprecated)]
 		#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 		{
 			#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
@@ -78,8 +78,8 @@ impl DenormalGuard {
 }
 
 impl Drop for DenormalGuard {
-	#[allow(deprecated)]
 	fn drop(&mut self) {
+		#[allow(deprecated)]
 		#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 		{
 			#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]

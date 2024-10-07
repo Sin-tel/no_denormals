@@ -52,12 +52,11 @@ fn set_csr(control: u32) {
 }
 
 fn get_csr() -> u32 {
-	let control: u32;
+	let mut control: u32 = 0;
 	unsafe {
-		asm!("stmxcsr [{tmp}]",
-            "mov {x:e}, [{tmp}]",
-            x = out(reg) control,
-            tmp = out(reg) _)
+		asm!("stmxcsr [{}]",
+			in(reg) &mut control,
+		)
 	}
 	control
 }

@@ -11,7 +11,7 @@
 //! use no_denormals::no_denormals;
 //!
 //! no_denormals(|| {
-//! 	// your DSP code here.
+//!     // your DSP code here.
 //! });
 //!
 //! ```
@@ -58,10 +58,10 @@ impl DenormalGuard {
 			let mxcsr = unsafe { _mm_getcsr() };
 			unsafe { _mm_setcsr(mxcsr | X86_MASK) };
 
-			return DenormalGuard {
+			DenormalGuard {
 				mxcsr,
 				_not_send_sync: PhantomData,
-			};
+			}
 		}
 		#[cfg(target_arch = "aarch64")]
 		{
@@ -69,10 +69,10 @@ impl DenormalGuard {
 			unsafe { std::arch::asm!("mrs {}, fpcr", out(reg) fpcr) };
 			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) fpcr | AARCH64_MASK) };
 
-			return DenormalGuard {
+			DenormalGuard {
 				fpcr,
 				_not_send_sync: PhantomData,
-			};
+			}
 		}
 	}
 }
@@ -104,7 +104,7 @@ pub fn no_denormals<T, F: FnOnce() -> T>(func: F) -> T {
 	let ret = func();
 	std::mem::drop(guard);
 
-	return ret;
+	ret
 }
 
 #[cfg(test)]

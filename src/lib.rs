@@ -11,7 +11,7 @@
 //! use no_denormals::no_denormals;
 //!
 //! no_denormals(|| {
-//! 	// your DSP code here.
+//!     // your DSP code here.
 //! });
 //!
 //! ```
@@ -19,6 +19,7 @@
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms)]
 
 use core::marker::PhantomData;
+use std::arch::asm;
 
 #[cfg(not(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")))]
 compile_error!("This crate only supports x86, x86_64 and aarch64.");
@@ -44,53 +45,65 @@ struct DenormalGuard {
 	_not_send_sync: PhantomData<*const ()>,
 }
 
+fn set_csr(control: u32) {
+	unsafe {
+		asm!("ldmxcsr [{}]", in(reg) &control);
+	}
+}
+
+fn get_csr() -> u32 {
+	let control: u32;
+	unsafe {
+		asm!("stmxcsr [{tmp}]",
+            "mov {x:e}, [{tmp}]",
+            x = out(reg) control,
+            tmp = out(reg) _)
+	}
+	control
+}
+
 impl DenormalGuard {
 	fn new() -> Self {
-		#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+		#[cfg(all(
+			any(target_arch = "x86_64", target_arch = "x86"),
+			target_feature = "sse"
+		))]
 		{
-			#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
-			use std::arch::x86_64::{_mm_getcsr, _mm_setcsr};
+			let mxcsr = get_csr();
+			set_csr(mxcsr | X86_MASK);
 
-			#[cfg(all(target_arch = "x86", target_feature = "sse"))]
-			use std::arch::x86::{_mm_getcsr, _mm_setcsr};
-
-			let mxcsr = unsafe { _mm_getcsr() };
-			unsafe { _mm_setcsr(mxcsr | X86_MASK) };
-
-			return DenormalGuard {
+			DenormalGuard {
 				mxcsr,
 				_not_send_sync: PhantomData,
-			};
+			}
 		}
 		#[cfg(target_arch = "aarch64")]
 		{
 			let mut fpcr: u64;
-			unsafe { std::arch::asm!("mrs {}, fpcr", out(reg) fpcr) };
-			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) fpcr | AARCH64_MASK) };
+			unsafe { asm!("mrs {}, fpcr", out(reg) fpcr) };
+			unsafe { asm!("msr fpcr, {}", in(reg) fpcr | AARCH64_MASK) };
 
-			return DenormalGuard {
+			DenormalGuard {
 				fpcr,
 				_not_send_sync: PhantomData,
-			};
+			}
 		}
 	}
 }
 
 impl Drop for DenormalGuard {
 	fn drop(&mut self) {
-		#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+		#[cfg(all(
+			any(target_arch = "x86_64", target_arch = "x86"),
+			target_feature = "sse"
+		))]
 		{
-			#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
-			use std::arch::x86_64::_mm_setcsr;
-
-			#[cfg(all(target_arch = "x86", target_feature = "sse"))]
-			use std::arch::x86::_mm_setcsr;
-
-			unsafe { _mm_setcsr(self.mxcsr) };
+			set_csr(self.mxcsr);
 		}
+
 		#[cfg(target_arch = "aarch64")]
 		{
-			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) self.fpcr) }
+			unsafe { asm!("msr fpcr, {}", in(reg) self.fpcr) }
 		};
 	}
 }
@@ -102,7 +115,7 @@ pub fn no_denormals<T, F: FnOnce() -> T>(func: F) -> T {
 	let ret = func();
 	std::mem::drop(guard);
 
-	return ret;
+	ret
 }
 
 #[cfg(test)]
@@ -114,10 +127,10 @@ mod tests {
 		std::hint::black_box(x) * 0.5
 	}
 
-	#[test]
-	fn arch() {
-		println!("Architecture: {:?}", std::env::consts::ARCH);
-	}
+	// #[test]
+	// fn arch() {
+	// 	println!("Architecture: {:?}", std::env::consts::ARCH);
+	// }
 
 	#[test]
 	fn test_positive() {

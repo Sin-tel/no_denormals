@@ -58,10 +58,7 @@ impl DenormalGuard {
 			let mxcsr = unsafe { _mm_getcsr() };
 			unsafe { _mm_setcsr(mxcsr | X86_MASK) };
 
-			DenormalGuard {
-				mxcsr,
-				_not_send_sync: PhantomData,
-			}
+			DenormalGuard { mxcsr, _not_send_sync: PhantomData }
 		}
 		#[cfg(target_arch = "aarch64")]
 		{
@@ -69,10 +66,7 @@ impl DenormalGuard {
 			unsafe { std::arch::asm!("mrs {}, fpcr", out(reg) fpcr) };
 			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) fpcr | AARCH64_MASK) };
 
-			DenormalGuard {
-				fpcr,
-				_not_send_sync: PhantomData,
-			}
+			DenormalGuard { fpcr, _not_send_sync: PhantomData }
 		}
 	}
 }

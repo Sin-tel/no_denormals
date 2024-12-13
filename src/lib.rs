@@ -5,14 +5,19 @@
 //! On aarch64 this sets the flush-to-zero flag in the FPCR register.
 //! In all cases, the register will be reset to its initial state when the guard is dropped.
 //!
+//! Note that according to the Rust docs, using this is technically undefined behaviour, see e.g. https://doc.rust-lang.org/core/arch/x86_64/fn._mm_setcsr.html
+//! So use this at your own risk.
+//!
 //! ## Usage
 //!
 //! ```rust
 //! use no_denormals::no_denormals;
 //!
-//! no_denormals(|| {
-//!     // your DSP code here.
-//! });
+//! unsafe {
+//!     no_denormals(|| {
+//!         // your DSP code here.
+//!     })
+//! };
 //!
 //! ```
 
@@ -92,8 +97,15 @@ impl Drop for DenormalGuard {
 }
 
 /// Calls the `func` closure.
+/// # Safety
+///
+/// Mdifying the masking flags, rounding mode, or denormals-are-zero mode flags leads to
+/// **immediate Undefined Behavior**: Rust assumes that these are always in their default state and
+/// will optimize accordingly.
+///
+/// Only use this when you are reasonably sure that it will not cause any issues.
 #[inline]
-pub fn no_denormals<T, F: FnOnce() -> T>(func: F) -> T {
+pub unsafe fn no_denormals<T, F: FnOnce() -> T>(func: F) -> T {
 	let guard = DenormalGuard::new();
 	let ret = func();
 	std::mem::drop(guard);
@@ -122,10 +134,12 @@ mod tests {
 			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		}
-		no_denormals(|| {
-			let smaller = half(small);
-			assert_eq!(smaller.classify(), FpCategory::Zero);
-		});
+		unsafe {
+			no_denormals(|| {
+				let smaller = half(small);
+				assert_eq!(smaller.classify(), FpCategory::Zero);
+			})
+		};
 		{
 			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
@@ -139,10 +153,12 @@ mod tests {
 			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		}
-		no_denormals(|| {
-			let smaller = half(small);
-			assert_eq!(smaller.classify(), FpCategory::Zero);
-		});
+		unsafe {
+			no_denormals(|| {
+				let smaller = half(small);
+				assert_eq!(smaller.classify(), FpCategory::Zero);
+			})
+		};
 		{
 			let smaller = half(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);

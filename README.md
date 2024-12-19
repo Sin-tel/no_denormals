@@ -18,8 +18,9 @@ So use this at your own risk.
 ```rust
 use no_denormals::no_denormals;
 
-no_denormals(|| {
-	// your DSP code here.
-});
-
+unsafe {
+    no_denormals(|| {
+        // your DSP code here.
+    })
+};
 ```

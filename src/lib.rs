@@ -99,7 +99,7 @@ impl Drop for DenormalGuard {
 /// Calls the `func` closure.
 /// # Safety
 ///
-/// Mdifying the masking flags, rounding mode, or denormals-are-zero mode flags leads to
+/// Modifying the masking flags, rounding mode, or denormals-are-zero mode flags leads to
 /// **immediate Undefined Behavior**: Rust assumes that these are always in their default state and
 /// will optimize accordingly.
 ///

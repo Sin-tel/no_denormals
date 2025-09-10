@@ -33,8 +33,11 @@ compile_error!("This crate only supports x86, x86_64 and aarch64.");
 const X86_MASK: u32 = 0x8040;
 
 // FTZ
-#[cfg(target_arch = "aarch64")]
+#[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
 const AARCH64_MASK: u64 = 1 << 24;
+// FTZ and FZ16
+#[cfg(all(target_arch = "aarch64", not(target_feature = "fp16")))]
+const AARCH64_MASK: u64 = (1 << 24) | (1 << 19);
 
 struct DenormalGuard {
 	#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

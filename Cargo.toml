@@ -10,3 +10,6 @@ readme = "README.md"
 keywords = ["dsp", "float"]
 description = "Temporarily turn off floating point denormals."
 categories = ["multimedia::audio"]
+[features]
+default = []
+f16 = []  # Enables f16 tests on nightly Rust

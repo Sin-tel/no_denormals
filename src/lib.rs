@@ -22,6 +22,7 @@
 //! ```
 
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms)]
+#![cfg_attr(all(test, feature = "f16"), feature(f16))]
 
 use core::marker::PhantomData;
 
@@ -121,7 +122,12 @@ mod tests {
 	use crate::no_denormals;
 	use std::num::FpCategory;
 
-	fn half(x: f32) -> f32 {
+	fn half_f32(x: f32) -> f32 {
+		std::hint::black_box(x) * 0.5
+	}
+
+	#[cfg(feature = "f16")]
+	fn half_f16(x: f16) -> f16 {
 		std::hint::black_box(x) * 0.5
 	}
 
@@ -131,39 +137,79 @@ mod tests {
 	}
 
 	#[test]
-	fn test_positive() {
+	fn test_f32_positive() {
 		let small: f32 = f32::MIN_POSITIVE;
 		{
-			let smaller = half(small);
+			let smaller = half_f32(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		}
 		unsafe {
 			no_denormals(|| {
-				let smaller = half(small);
+				let smaller = half_f32(small);
 				assert_eq!(smaller.classify(), FpCategory::Zero);
 			})
 		};
 		{
-			let smaller = half(small);
+			let smaller = half_f32(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		};
 	}
 
 	#[test]
-	fn test_negative() {
+	fn test_f32_negative() {
 		let small: f32 = -f32::MIN_POSITIVE;
 		{
-			let smaller = half(small);
+			let smaller = half_f32(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		}
 		unsafe {
 			no_denormals(|| {
-				let smaller = half(small);
+				let smaller = half_f32(small);
 				assert_eq!(smaller.classify(), FpCategory::Zero);
 			})
 		};
 		{
-			let smaller = half(small);
+			let smaller = half_f32(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		};
+	}
+
+	#[cfg(all(feature = "f16", target_arch = "aarch64", target_feature = "fp16"))]
+	#[test]
+	fn test_f16_positive() {
+		let small: f16 = f16::MIN_POSITIVE;
+		{
+			let smaller = half_f16(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		}
+		unsafe {
+			no_denormals(|| {
+				let smaller = half_f16(small);
+				assert_eq!(smaller.classify(), FpCategory::Zero);
+			})
+		};
+		{
+			let smaller = half_f16(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		};
+	}
+
+	#[cfg(all(feature = "f16", target_arch = "aarch64", target_feature = "fp16"))]
+	#[test]
+	fn test_f16_negative() {
+		let small: f16 = -f16::MIN_POSITIVE;
+		{
+			let smaller = half_f16(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		}
+		unsafe {
+			no_denormals(|| {
+				let smaller = half_f16(small);
+				assert_eq!(smaller.classify(), FpCategory::Zero);
+			})
+		};
+		{
+			let smaller = half_f16(small);
 			assert_eq!(smaller.classify(), FpCategory::Subnormal);
 		};
 	}

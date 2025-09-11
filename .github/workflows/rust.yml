@@ -31,4 +31,4 @@ jobs:
     - name: Run tests
       run: cargo test verbose -- --nocapture
     - name: Run tests nightly
-      run: cargo +nightly test --features f16 --verbose -- --nocapture
+      run: cargo +nightly test --features _f16_test --verbose -- --nocapture

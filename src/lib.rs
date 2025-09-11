@@ -22,7 +22,7 @@
 //! ```
 
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms)]
-#![cfg_attr(all(test, feature = "f16"), feature(f16))]
+#![cfg_attr(all(test, feature = "_f16_test"), feature(f16))]
 
 use core::marker::PhantomData;
 
@@ -126,7 +126,7 @@ mod tests {
 		std::hint::black_box(x) * 0.5
 	}
 
-	#[cfg(feature = "f16")]
+	#[cfg(feature = "_f16_test")]
 	fn half_f16(x: f16) -> f16 {
 		std::hint::black_box(x) * 0.5
 	}
@@ -174,7 +174,7 @@ mod tests {
 		};
 	}
 
-	#[cfg(all(feature = "f16", target_arch = "aarch64", target_feature = "fp16"))]
+	#[cfg(all(feature = "_f16_test", target_arch = "aarch64", target_feature = "fp16"))]
 	#[test]
 	fn test_f16_positive() {
 		let small: f16 = f16::MIN_POSITIVE;
@@ -194,7 +194,7 @@ mod tests {
 		};
 	}
 
-	#[cfg(all(feature = "f16", target_arch = "aarch64", target_feature = "fp16"))]
+	#[cfg(all(feature = "_f16_test", target_arch = "aarch64", target_feature = "fp16"))]
 	#[test]
 	fn test_f16_negative() {
 		let small: f16 = -f16::MIN_POSITIVE;

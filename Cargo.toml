@@ -16,4 +16,4 @@ default = []
 
 ## Enables f16 support testing on nightly Rust.
 ## This feature only affects tests and does not change the public API.
-f16 = []
+_f16_test = []

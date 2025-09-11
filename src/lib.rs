@@ -2,10 +2,10 @@
 //!
 //! Internally, this uses a RAII-style guard to manage the state of certain processor flags.
 //! On x86 and x86_64, this sets the flush-to-zero and denormals-are-zero flags in the MXCSR register.
-//! On aarch64 this sets the flush-to-zero flag in the FPCR register.
+//! On aarch64 this sets the flush-to-zero flag in the FPCR register, including the flag for fp16 if it is supported.
 //! In all cases, the register will be reset to its initial state when the guard is dropped.
 //!
-//! Note that according to the Rust docs, using this is technically undefined behaviour, see e.g. https://doc.rust-lang.org/core/arch/x86_64/fn._mm_setcsr.html
+//! Note that according to the Rust docs, using this is technically undefined behaviour, see e.g. <https://doc.rust-lang.org/core/arch/x86_64/fn._mm_setcsr.html>
 //! So use this at your own risk.
 //!
 //! ## Usage
